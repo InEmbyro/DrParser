@@ -66,8 +66,120 @@ LPVOID CDrParse::getMapAddr(void)
 	return m_lpMapAddress;
 }
 
+void CDrParse::ParseOneCycleRawObject(std::list<CY_OWN::DR_FILE_CAN_PKT>* ptr, double velocity)
+{
+	int idx = 0;
+	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite;
+	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite402;
+	CY_OWN::RAW_DATA_OBJECT raw;
+
+	m_RawObjectList.clear();
+	for (ite = ptr->begin(); ite != ptr->end(); ite++) {
+		if (ite->sid == 0x401) {
+			raw.targetNo = ite->data[0] & 0x3F;
+
+			idx = ite->data[2] & 0x01;
+			idx = (idx << 8) + ite->data[1];
+			idx = (idx << 2) + ((ite->data[0] & 0xC0) >> 6);
+			raw.angle =((idx - 1024) * 0.16);
+
+			idx = ite->data[4] & 0x01;
+			idx = (idx << 8) + ite->data[3];
+			idx = (idx << 7) + ((ite->data[2] & 0xFE) >> 1);
+			raw.range = idx * 0.01;
+
+			idx = ite->data[5] & 0x03;
+			idx = (idx << 7) + ((ite->data[4] & 0xFE) >> 1);
+			raw.AbsLevel_db = idx * 0.32;
+
+			raw.type = ((ite->data[5] & 0x7C) >> 2);
+
+			idx = ite->data[7];
+			idx = (idx << 6) + ((ite->data[6] & 0xFC) >> 2);
+			raw.relatedSpeed = ((idx - 8192) * 0.02);
+
+			for (ite402 = ite; ite402 != ptr->end(); ite402++) {
+				if (raw.targetNo == ite402->data[0] & 0x3F) {
+					idx = ite402->data[3] & 0x01;
+					idx = (idx << 8) + ite402->data[2];
+					raw.threshold = idx * 0.32;
+					m_RawObjectList.push_back(raw);
+					break;
+				}
+			}
+		}
+	}
+
+	if (m_RawObjectList.size() == 0)
+		return;
+
+	std::list<CY_OWN::RAW_DATA_OBJECT>::iterator iteRaw;
+	for (iteRaw = m_RawObjectList.begin(); iteRaw != m_RawObjectList.end(); iteRaw++) {
+		printf("%d, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d\n", m_RawObjectList.size(), (int)iteRaw->targetNo, iteRaw->angle, iteRaw->range, 
+			iteRaw->AbsLevel_db, iteRaw->relatedSpeed, iteRaw->threshold, iteRaw->type);
+	}
+
+	return;
+}
+
+void CDrParse::ParseCarVelocity(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite)
+{
+	int idx;
+
+	idx = ite->data[1] & 0x7F;
+	idx = (idx << 8) + ite->data[0];
+	m_system.velocity = idx * 0.01;
+}
+
+void CDrParse::Parse400(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite)
+{
+	if (ite->dlc != 6)
+		return;
+}
+void CDrParse::Parse401(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator end)
+{
+	int idx;
+	CY_OWN::RAW_DATA_OBJECT raw;
+	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite402;
+
+	raw.targetNo = ite->data[0] & 0x3F;
+
+	idx = ite->data[2] & 0x01;
+	idx = (idx << 8) + ite->data[1];
+	idx = (idx << 2) + ((ite->data[0] & 0xC0) >> 6);
+	raw.angle =((idx - 1024) * 0.16);
+
+	idx = ite->data[4] & 0x01;
+	idx = (idx << 8) + ite->data[3];
+	idx = (idx << 7) + ((ite->data[2] & 0xFE) >> 1);
+	raw.range = idx * 0.01;
+
+	idx = ite->data[5] & 0x03;
+	idx = (idx << 7) + ((ite->data[4] & 0xFE) >> 1);
+	raw.AbsLevel_db = idx * 0.32;
+
+	raw.type = ((ite->data[5] & 0x7C) >> 2);
+
+	idx = ite->data[7];
+	idx = (idx << 6) + ((ite->data[6] & 0xFC) >> 2);
+	raw.relatedSpeed = ((idx - 8192) * 0.02);
+
+	for (ite402 = ite; ite402 != end; ite402++) {
+		if (raw.targetNo == ite402->data[0] & 0x3F) {
+			idx = ite402->data[3] & 0x01;
+			idx = (idx << 8) + ite402->data[2];
+			raw.threshold = idx * 0.32;
+			printf("%.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d\n", m_system.velocity, (int)raw.targetNo, raw.angle, 
+				raw.range, raw.AbsLevel_db, raw.relatedSpeed, raw.threshold, raw.type);
+			break;
+		}
+	}
+}
+
 void CDrParse::ShowRawObject()
 {
+	double velocity;
+
 	if (m_RawList.size() <= 0)
 		return;
 
@@ -77,50 +189,36 @@ void CDrParse::ShowRawObject()
 
 	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite;
 
+	cout << "Velocity," << "Target No.," << "Angle," << "Range," << "Power," << "RelatedSpeed," << "Threshold," << "Type" << endl;
 	ite = m_RawList.begin();
-	printf("Timestamp, CAN ID, Target No., Angle, Range, Power, Type, RelatedSpeed\n");
 	while (ite != m_RawList.end()) {
-		if (ite->sid == 0x400 && ite->dlc == 7) {
-			if (previousTime == 0) {
-				m_cycle = 1;
-				printf("Cycle %d\n", m_cycle);
-				previousTime = ite->time;
-			} else {
-				m_cycle++;
-				printf("Cycle %d, time differnece %ld ", m_cycle, ite->time - previousTime);
-				if ((ite->time - previousTime) >= 45000)
-					printf("OVERTIME\n");
-				else
-					printf("\n");
-				previousTime = ite->time;
-			}
-		} else if (ite->sid == 0x401 && m_cycle != 0) {
-			printf("%ld, ", ite->time);
-
-			idx = ite->data[0] & 0x3F;
-			printf("%03X, %d, ", ite->sid, idx);
-
-			idx = ite->data[2] & 0x01;
-			idx = (idx << 8) + ite->data[1];
-			idx = (idx << 2) + ((ite->data[0] & 0xC0) >> 6);
-			printf("%.3f, ", (idx - 1024) * 0.16);
-
-			idx = ite->data[4] & 0x01;
-			idx = (idx << 8) + ite->data[3];
-			idx = (idx << 7) + ((ite->data[2] & 0xFE) >> 1);
-			printf("%.3f, ", idx * 0.01);
-
-			idx = ite->data[5] & 0x03;
-			idx = (idx << 7) + ((ite->data[4] & 0xFE) >> 1);
-			printf("%.3f,", idx * 0.32);
-
-			printf("%d, ", (ite->data[5] & 0x7C) >> 2);
-
-			idx = ite->data[7];
-			idx = (idx << 6) + ((ite->data[6] & 0xFC) >> 2);
-			printf("%.3f\n", (idx - 8192) * 0.02);
-			
+#if 1
+		switch (ite->sid) {
+		case 0x3F5:
+			ParseCarVelocity(ite);
+			break;
+		case 0x400:
+			Parse400(ite);
+			break;
+		case 0x401:
+			Parse401(ite, m_RawList.end());
+			break;
+		default:
+			break;
 		}
+#else
+		if (ite->sid == 0x400 && ite->dlc == 6) {
+			ParseOneCycleRawObject(&tempRawList);
+			tempRawList.clear();
+		} else if (ite->sid == 0x401 || ite->sid == 0x402) {
+			memcpy((void*)&itePkt, (void*)&ite._Ptr->_Myval, sizeof(itePkt));
+			tempRawList.push_back(itePkt);
+		} else if (ite->sid == 0x3F5) {
+			idx = ite->data[1] & 0x7F;
+			idx = (idx << 8) + ite->data[0];
+			velocity = idx * 0.01;
+		}
+#endif
 		ite++;
 	}
 }

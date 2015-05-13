@@ -13,6 +13,18 @@ namespace CY_OWN {
 		unsigned char data[8];	//byte[27:20]
 		unsigned char reserve4[12];
 	};
+	struct SYSTEM_STATUS {
+		double velocity;
+	};
+	struct RAW_DATA_OBJECT {
+		unsigned char targetNo;
+		double	threshold;
+		double	angle;
+		double	range;
+		double 	AbsLevel_db;
+		double	relatedSpeed;	// m/s
+		unsigned char type;
+	};
 };
 
 #endif	//__CY_OWN_HEADER__

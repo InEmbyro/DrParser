@@ -22,6 +22,7 @@ public:
 	void	ShowRawObject(void);
 
 	std::list<CY_OWN::DR_FILE_CAN_PKT> m_RawList;
+	std::list<CY_OWN::RAW_DATA_OBJECT> m_RawObjectList;
 
 private:
 	LPVOID	m_lpMapAddress;
@@ -30,4 +31,9 @@ private:
 	DWORD	m_FielSizeLow;
 	DWORD	filesizeHigh;
 	unsigned int m_cycle;
+	void	ParseOneCycleRawObject(std::list<CY_OWN::DR_FILE_CAN_PKT>*, double);
+	void	ParseCarVelocity(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
+	void	Parse400(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
+	void	Parse401(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
+	CY_OWN::SYSTEM_STATUS	m_system;
 };

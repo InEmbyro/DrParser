@@ -1,2 +1,1 @@
-Code base comes from DR_parse. Using memcpy method to read DR file.
-
+1. Parse all raw object
