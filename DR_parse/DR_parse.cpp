@@ -24,7 +24,6 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	BYTE *pFileName = NULL;
 	CDrParse parse;
-	int idx;
 	std::list<std::basic_string<WCHAR>>::iterator ite;
 	std::basic_string<WCHAR> name;
 

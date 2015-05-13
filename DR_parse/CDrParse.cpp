@@ -76,7 +76,8 @@ void CDrParse::OperFile2Mapping(std::basic_string<WCHAR> name)
 			//nothing to do
 		} else {
 			name.replace(idx+1, 3, csv);
-			m_pOut = _wfreopen(name.data(), TEXT("w+"), stdout);
+			if (_wfreopen_s(&m_pOut, name.data(), TEXT("w+"), stdout) != 0)
+				cout << "Redirecting fail" << endl;
 		}
 	}
 
@@ -136,11 +137,51 @@ void CDrParse::Parse401(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::l
 	raw.relatedSpeed = ((idx - 8192) * 0.02);
 
 	for (ite402 = ite; ite402 != end; ite402++) {
-		if (raw.targetNo == ite402->data[0] & 0x3F) {
+		if (raw.targetNo == (ite402->data[0] & 0x3F)) {
 			idx = ite402->data[3] & 0x01;
 			idx = (idx << 8) + ite402->data[2];
 			raw.threshold = idx * 0.32;
-			printf("%.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d\n", m_system.velocity, (int)raw.targetNo, raw.angle, 
+			printf("%.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 0\n", m_system.velocity, (int)raw.targetNo, raw.angle, 
+				raw.range, raw.AbsLevel_db, raw.relatedSpeed, raw.threshold, raw.type);
+			break;
+		}
+	}
+}
+
+void CDrParse::Parse411(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator end)
+{
+	int idx;
+	CY_OWN::RAW_DATA_OBJECT raw;
+	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite402;
+
+	raw.targetNo = ite->data[0] & 0x3F;
+
+	idx = ite->data[2] & 0x01;
+	idx = (idx << 8) + ite->data[1];
+	idx = (idx << 2) + ((ite->data[0] & 0xC0) >> 6);
+	raw.angle =((idx - 1024) * 0.16);
+
+	idx = ite->data[4] & 0x01;
+	idx = (idx << 8) + ite->data[3];
+	idx = (idx << 7) + ((ite->data[2] & 0xFE) >> 1);
+	raw.range = idx * 0.01;
+
+	idx = ite->data[5] & 0x03;
+	idx = (idx << 7) + ((ite->data[4] & 0xFE) >> 1);
+	raw.AbsLevel_db = idx * 0.32;
+
+	raw.type = ((ite->data[5] & 0x7C) >> 2);
+
+	idx = ite->data[7];
+	idx = (idx << 6) + ((ite->data[6] & 0xFC) >> 2);
+	raw.relatedSpeed = ((idx - 8192) * 0.02);
+
+	for (ite402 = ite; ite402 != end; ite402++) {
+		if (raw.targetNo == (ite402->data[0] & 0x3F)) {
+			idx = ite402->data[3] & 0x01;
+			idx = (idx << 8) + ite402->data[2];
+			raw.threshold = idx * 0.32;
+			printf("%.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 1\n", m_system.velocity, (int)raw.targetNo, raw.angle, 
 				raw.range, raw.AbsLevel_db, raw.relatedSpeed, raw.threshold, raw.type);
 			break;
 		}
@@ -149,8 +190,6 @@ void CDrParse::Parse401(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::l
 
 void CDrParse::ShowRawObject()
 {
-	double velocity;
-
 	if (m_RawList.size() <= 0)
 		return;
 
@@ -161,7 +200,7 @@ void CDrParse::ShowRawObject()
 	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite;
 	
 
-	cout << "Velocity," << "Target No.," << "Angle," << "Range," << "Power," << "RelatedSpeed," << "Threshold," << "Type" << endl;
+	cout << "Velocity," << "Target No.," << "Angle," << "Range," << "Power," << "RelatedSpeed," << "Threshold," << "Type," << "0/1" << endl;
 	ite = m_RawList.begin();
 	while (!m_RawList.empty()) {
 		ite = m_RawList.begin();
@@ -174,6 +213,9 @@ void CDrParse::ShowRawObject()
 			break;
 		case 0x401:
 			Parse401(ite, m_RawList.end());
+			break;
+		case 0x411:
+			Parse411(ite, m_RawList.end());
 			break;
 		default:
 			break;
@@ -189,9 +231,7 @@ void CDrParse::ParseCan()
 	BYTE* pE = NULL;
 	BYTE* ptr = NULL;
 	BYTE* ptrRaw = NULL;
-	BYTE buf[BUFFER_SIZE];
 	short idx = 0;
-	CAN_MSG msg;
 	CY_OWN::DR_FILE_CAN_PKT pkt;
 	
 	pE = (BYTE*)m_lpMapAddress + m_FielSizeLow;

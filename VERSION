@@ -1,2 +1,1 @@
-1. Parse all DR in current folder and put the output on CSV file.
-
+1. The tool will parse all DR file in the same folder and creates corresponding CSV files.
