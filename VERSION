@@ -1,1 +1,2 @@
-1. Parse all raw object
+1. Parse all DR in current folder and put the output on CSV file.
+

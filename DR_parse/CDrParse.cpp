@@ -2,6 +2,7 @@
 #include "CDrParse.h"
 #include "type.h"
 #include <iostream>
+#include <io.h>
 #include <ctime>
 #include <math.h>
 #include <list>
@@ -30,6 +31,8 @@ std::list<CAN_MSG>* pOutputList;
 CDrParse::CDrParse()
 	:m_FileHnd(INVALID_HANDLE_VALUE), m_MappingHnd(INVALID_HANDLE_VALUE), m_lpMapAddress(NULL)
 {
+	m_pOut = NULL;
+	memset((void*)&m_system, 0x00, sizeof(m_system));
 }
 
 CDrParse::~CDrParse()
@@ -46,12 +49,36 @@ HANDLE CDrParse::getFileHnd(void)
 	return m_FileHnd;
 }
 
-void CDrParse::OperFile2Mapping(BYTE* pName)
+void CDrParse::Close()
 {
-	m_FileHnd = CreateFile((LPCWSTR)pName, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	UnmapViewOfFile(m_lpMapAddress);
+	CloseHandle(m_MappingHnd);
+	CloseHandle(m_FileHnd);
+	fclose(m_pOut);
+
+	m_lpMapAddress = NULL;
+	m_FileHnd = INVALID_HANDLE_VALUE;
+	m_MappingHnd = INVALID_HANDLE_VALUE;
+}
+
+void CDrParse::OperFile2Mapping(std::basic_string<WCHAR> name)
+{
+	std::basic_string<WCHAR> csv(TEXT("csv"));
+
+	m_FileHnd = CreateFile(name.data(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	m_FielSizeLow = GetFileSize(m_FileHnd, &filesizeHigh);
 	m_MappingHnd = CreateFileMapping(m_FileHnd, NULL, PAGE_READONLY, 0, 0, NULL);
 	m_lpMapAddress = MapViewOfFile(m_MappingHnd, FILE_MAP_READ, 0, 0, 0);
+
+	if (m_lpMapAddress != NULL) {
+		size_t idx = name.find_last_of('.');
+		if (idx == std::string::npos) {
+			//nothing to do
+		} else {
+			name.replace(idx+1, 3, csv);
+			m_pOut = _wfreopen(name.data(), TEXT("w+"), stdout);
+		}
+	}
 
 	return;
 }
@@ -64,62 +91,6 @@ HANDLE CDrParse::getMappingHnd(void)
 LPVOID CDrParse::getMapAddr(void)
 {
 	return m_lpMapAddress;
-}
-
-void CDrParse::ParseOneCycleRawObject(std::list<CY_OWN::DR_FILE_CAN_PKT>* ptr, double velocity)
-{
-	int idx = 0;
-	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite;
-	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite402;
-	CY_OWN::RAW_DATA_OBJECT raw;
-
-	m_RawObjectList.clear();
-	for (ite = ptr->begin(); ite != ptr->end(); ite++) {
-		if (ite->sid == 0x401) {
-			raw.targetNo = ite->data[0] & 0x3F;
-
-			idx = ite->data[2] & 0x01;
-			idx = (idx << 8) + ite->data[1];
-			idx = (idx << 2) + ((ite->data[0] & 0xC0) >> 6);
-			raw.angle =((idx - 1024) * 0.16);
-
-			idx = ite->data[4] & 0x01;
-			idx = (idx << 8) + ite->data[3];
-			idx = (idx << 7) + ((ite->data[2] & 0xFE) >> 1);
-			raw.range = idx * 0.01;
-
-			idx = ite->data[5] & 0x03;
-			idx = (idx << 7) + ((ite->data[4] & 0xFE) >> 1);
-			raw.AbsLevel_db = idx * 0.32;
-
-			raw.type = ((ite->data[5] & 0x7C) >> 2);
-
-			idx = ite->data[7];
-			idx = (idx << 6) + ((ite->data[6] & 0xFC) >> 2);
-			raw.relatedSpeed = ((idx - 8192) * 0.02);
-
-			for (ite402 = ite; ite402 != ptr->end(); ite402++) {
-				if (raw.targetNo == ite402->data[0] & 0x3F) {
-					idx = ite402->data[3] & 0x01;
-					idx = (idx << 8) + ite402->data[2];
-					raw.threshold = idx * 0.32;
-					m_RawObjectList.push_back(raw);
-					break;
-				}
-			}
-		}
-	}
-
-	if (m_RawObjectList.size() == 0)
-		return;
-
-	std::list<CY_OWN::RAW_DATA_OBJECT>::iterator iteRaw;
-	for (iteRaw = m_RawObjectList.begin(); iteRaw != m_RawObjectList.end(); iteRaw++) {
-		printf("%d, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d\n", m_RawObjectList.size(), (int)iteRaw->targetNo, iteRaw->angle, iteRaw->range, 
-			iteRaw->AbsLevel_db, iteRaw->relatedSpeed, iteRaw->threshold, iteRaw->type);
-	}
-
-	return;
 }
 
 void CDrParse::ParseCarVelocity(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite)
@@ -188,11 +159,12 @@ void CDrParse::ShowRawObject()
 	unsigned int previousTime = 0;
 
 	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite;
+	
 
 	cout << "Velocity," << "Target No.," << "Angle," << "Range," << "Power," << "RelatedSpeed," << "Threshold," << "Type" << endl;
 	ite = m_RawList.begin();
-	while (ite != m_RawList.end()) {
-#if 1
+	while (!m_RawList.empty()) {
+		ite = m_RawList.begin();
 		switch (ite->sid) {
 		case 0x3F5:
 			ParseCarVelocity(ite);
@@ -206,20 +178,8 @@ void CDrParse::ShowRawObject()
 		default:
 			break;
 		}
-#else
-		if (ite->sid == 0x400 && ite->dlc == 6) {
-			ParseOneCycleRawObject(&tempRawList);
-			tempRawList.clear();
-		} else if (ite->sid == 0x401 || ite->sid == 0x402) {
-			memcpy((void*)&itePkt, (void*)&ite._Ptr->_Myval, sizeof(itePkt));
-			tempRawList.push_back(itePkt);
-		} else if (ite->sid == 0x3F5) {
-			idx = ite->data[1] & 0x7F;
-			idx = (idx << 8) + ite->data[0];
-			velocity = idx * 0.01;
-		}
-#endif
 		ite++;
+		m_RawList.pop_front();
 	}
 }
 

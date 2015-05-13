@@ -14,7 +14,8 @@ public:
 	CDrParse();
 	~CDrParse();
 
-	void	OperFile2Mapping(BYTE* pName);
+	void	OperFile2Mapping(std::basic_string<WCHAR>);
+	void	Close(void);
 	HANDLE	getFileHnd(void);
 	HANDLE	getMappingHnd(void);
 	LPVOID	getMapAddr(void);
@@ -27,11 +28,11 @@ public:
 private:
 	LPVOID	m_lpMapAddress;
 	HANDLE	m_FileHnd;
+	FILE*	m_pOut;
 	HANDLE	m_MappingHnd;
 	DWORD	m_FielSizeLow;
 	DWORD	filesizeHigh;
 	unsigned int m_cycle;
-	void	ParseOneCycleRawObject(std::list<CY_OWN::DR_FILE_CAN_PKT>*, double);
 	void	ParseCarVelocity(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
 	void	Parse400(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
 	void	Parse401(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
