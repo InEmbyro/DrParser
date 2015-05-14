@@ -23,7 +23,8 @@ public:
 	void	ShowRawObject(void);
 
 	std::list<CY_OWN::DR_FILE_CAN_PKT> m_RawList;
-	std::list<CY_OWN::RAW_DATA_OBJECT> m_RawObjectList;
+	std::list<CY_OWN::RAW_DATA_OBJECT> m_RawObject401List;
+	std::list<CY_OWN::RAW_DATA_OBJECT> m_RawObject411List;
 
 private:
 	LPVOID	m_lpMapAddress;

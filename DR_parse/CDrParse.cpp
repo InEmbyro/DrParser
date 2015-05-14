@@ -141,8 +141,9 @@ void CDrParse::Parse401(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::l
 			idx = ite402->data[3] & 0x01;
 			idx = (idx << 7) + ((ite402->data[2] & 0xFE) >> 1);
 			raw.threshold = idx * 0.32;
-			printf("%.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 0\n", m_system.velocity, (int)raw.targetNo, raw.angle, 
-				raw.range, raw.AbsLevel_db, raw.relatedSpeed, raw.threshold, raw.type);
+			m_RawObject401List.push_back(raw);
+			//printf("%.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 0\n", m_system.velocity, (int)raw.targetNo, raw.angle, 
+			//	raw.range, raw.AbsLevel_db, raw.relatedSpeed, raw.threshold, raw.type);
 			break;
 		}
 	}
@@ -177,12 +178,13 @@ void CDrParse::Parse411(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::l
 	raw.relatedSpeed = ((idx - 8192) * 0.02);
 
 	for (ite402 = ite; ite402 != end; ite402++) {
-		if (raw.targetNo == (ite402->data[0] & 0x3F)) {
+		if (raw.targetNo == (ite402->data[0] & 0x3F) && ite402->sid == 0x412) {
 			idx = ite402->data[3] & 0x01;
-			idx = (idx << 8) + ite402->data[2];
+			idx = (idx << 7) + ((ite402->data[2] & 0xFE) >> 1);
 			raw.threshold = idx * 0.32;
-			printf("%.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 1\n", m_system.velocity, (int)raw.targetNo, raw.angle, 
-				raw.range, raw.AbsLevel_db, raw.relatedSpeed, raw.threshold, raw.type);
+			//printf("%.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 1\n", m_system.velocity, (int)raw.targetNo, raw.angle, 
+			//	raw.range, raw.AbsLevel_db, raw.relatedSpeed, raw.threshold, raw.type);
+			m_RawObject411List.push_back(raw);
 			break;
 		}
 	}
@@ -198,8 +200,8 @@ void CDrParse::ShowRawObject()
 	unsigned int previousTime = 0;
 
 	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite;
+	std::list<CY_OWN::RAW_DATA_OBJECT>::iterator iteRaw;
 	
-
 	cout << "Velocity," << "Target No.," << "Angle," << "Range," << "Power," << "RelatedSpeed," << "Threshold," << "Type," << "0/1" << endl;
 	ite = m_RawList.begin();
 	while (!m_RawList.empty()) {
@@ -210,6 +212,26 @@ void CDrParse::ShowRawObject()
 			break;
 		case 0x400:
 			Parse400(ite);
+			iteRaw = m_RawObject401List.begin();
+			while (iteRaw != m_RawObject401List.end()) {
+				iteRaw = m_RawObject401List.begin();
+				printf("%.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 0\n", m_system.velocity, (int)iteRaw->targetNo, iteRaw->angle, 
+					iteRaw->range, iteRaw->AbsLevel_db, iteRaw->relatedSpeed, iteRaw->threshold, iteRaw->type);
+				iteRaw++;
+				m_RawObject401List.pop_front();
+			}
+			m_RawObject401List.clear();
+			break;
+		case 0x410:
+			iteRaw = m_RawObject411List.begin();
+			while (iteRaw != m_RawObject411List.end()) {
+				iteRaw = m_RawObject411List.begin();
+				printf("%.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 1\n", m_system.velocity, (int)iteRaw->targetNo, iteRaw->angle, 
+					iteRaw->range, iteRaw->AbsLevel_db, iteRaw->relatedSpeed, iteRaw->threshold, iteRaw->type);
+				iteRaw++;
+				m_RawObject411List.pop_front();
+			}
+			m_RawObject411List.clear();
 			break;
 		case 0x401:
 			Parse401(ite, m_RawList.end());
