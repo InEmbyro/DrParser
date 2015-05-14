@@ -137,9 +137,9 @@ void CDrParse::Parse401(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::l
 	raw.relatedSpeed = ((idx - 8192) * 0.02);
 
 	for (ite402 = ite; ite402 != end; ite402++) {
-		if (raw.targetNo == (ite402->data[0] & 0x3F)) {
+		if (raw.targetNo == (ite402->data[0] & 0x3F) && ite402->sid == 0x402) {
 			idx = ite402->data[3] & 0x01;
-			idx = (idx << 8) + ite402->data[2];
+			idx = (idx << 7) + ((ite402->data[2] & 0xFE) >> 1);
 			raw.threshold = idx * 0.32;
 			printf("%.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 0\n", m_system.velocity, (int)raw.targetNo, raw.angle, 
 				raw.range, raw.AbsLevel_db, raw.relatedSpeed, raw.threshold, raw.type);

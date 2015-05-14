@@ -1,1 +1,2 @@
-1. The tool will parse all DR file in the same folder and creates corresponding CSV files.
+1. Bug fixing. Threshold is not correct.
+
