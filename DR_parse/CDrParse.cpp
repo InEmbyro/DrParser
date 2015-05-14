@@ -138,7 +138,7 @@ void CDrParse::Parse401(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::l
 
 	for (ite402 = ite; ite402 != end; ite402++) {
 		if (raw.targetNo == (ite402->data[0] & 0x3F) && ite402->sid == 0x402) {
-			idx = ite402->data[3] & 0x01;
+			idx = ite402->data[3] & 0x03;
 			idx = (idx << 7) + ((ite402->data[2] & 0xFE) >> 1);
 			raw.threshold = idx * 0.32;
 			m_RawObject401List.push_back(raw);
@@ -179,7 +179,7 @@ void CDrParse::Parse411(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::l
 
 	for (ite402 = ite; ite402 != end; ite402++) {
 		if (raw.targetNo == (ite402->data[0] & 0x3F) && ite402->sid == 0x412) {
-			idx = ite402->data[3] & 0x01;
+			idx = ite402->data[3] & 0x03;
 			idx = (idx << 7) + ((ite402->data[2] & 0xFE) >> 1);
 			raw.threshold = idx * 0.32;
 			//printf("%.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 1\n", m_system.velocity, (int)raw.targetNo, raw.angle, 
