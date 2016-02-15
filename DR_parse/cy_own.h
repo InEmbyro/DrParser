@@ -20,6 +20,7 @@ namespace CY_OWN {
 		unsigned char targetNo;
 		double	threshold;
 		double	angle;
+		double	elevation;
 		double	range;
 		double 	AbsLevel_db;
 		double	relatedSpeed;	// m/s
