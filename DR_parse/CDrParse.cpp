@@ -137,7 +137,7 @@ void CDrParse::Parse401(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::l
 	raw.relatedSpeed = ((idx - 8192) * 0.02);
 
 	for (ite402 = ite; ite402 != end; ite402++) {
-		if (raw.targetNo == (ite402->data[0] & 0x3F) && ite402->sid == 0x402) {
+		if (raw.targetNo == (ite402->data[0] & 0x3F) && ite402->sid == 0x405) {
 			idx = ite402->data[3] & 0x03;
 			idx = (idx << 7) + ((ite402->data[2] & 0xFE) >> 1);
 			raw.threshold = idx * 0.32;
@@ -178,7 +178,7 @@ void CDrParse::Parse411(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::l
 	raw.relatedSpeed = ((idx - 8192) * 0.02);
 
 	for (ite402 = ite; ite402 != end; ite402++) {
-		if (raw.targetNo == (ite402->data[0] & 0x3F) && ite402->sid == 0x412) {
+		if (raw.targetNo == (ite402->data[0] & 0x3F) && ite402->sid == 0x415) {
 			idx = ite402->data[3] & 0x03;
 			idx = (idx << 7) + ((ite402->data[2] & 0xFE) >> 1);
 			raw.threshold = idx * 0.32;
@@ -198,6 +198,7 @@ void CDrParse::ShowRawObject()
 	bool findHead = TRUE;
 	int idx = 0;
 	unsigned int previousTime = 0;
+	int counter = 500000;
 
 	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite;
 	std::list<CY_OWN::RAW_DATA_OBJECT>::iterator iteRaw;
@@ -210,7 +211,7 @@ void CDrParse::ShowRawObject()
 		case 0x3F5:
 			ParseCarVelocity(ite);
 			break;
-		case 0x400:
+		case 0x403:
 			Parse400(ite);
 			iteRaw = m_RawObject401List.begin();
 			while (iteRaw != m_RawObject401List.end()) {
@@ -222,7 +223,8 @@ void CDrParse::ShowRawObject()
 			}
 			m_RawObject401List.clear();
 			break;
-		case 0x410:
+		case 0x413:
+			//counter--;
 			iteRaw = m_RawObject411List.begin();
 			while (iteRaw != m_RawObject411List.end()) {
 				iteRaw = m_RawObject411List.begin();
@@ -233,10 +235,10 @@ void CDrParse::ShowRawObject()
 			}
 			m_RawObject411List.clear();
 			break;
-		case 0x401:
+		case 0x404:
 			Parse401(ite, m_RawList.end());
 			break;
-		case 0x411:
+		case 0x414:
 			Parse411(ite, m_RawList.end());
 			break;
 		default:
