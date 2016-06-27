@@ -103,6 +103,99 @@ void CDrParse::ParseCarVelocity(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite
 	m_system.velocity = idx * 0.01;
 }
 
+
+void CDrParse::ParseMasterTrackingHead(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator end)
+{
+	unsigned int number;
+	unsigned int cycleCount;
+	unsigned int temp;
+	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator nextTracking;
+	TRACKING_DATA_OBJECT trackObj;
+
+	number = ite->data[0];
+	cycleCount = ite->data[7];
+	cycleCount = (cycleCount << 8) + ite->data[6];
+	cycleCount = (cycleCount << 8) + ite->data[5];
+	cycleCount = (cycleCount << 8) + ite->data[4];
+	printf("No. of Tracking %d, Cycle: %d\nNo., Range X, Range Y, Speed X, Speed Y\n", number, cycleCount);
+
+	ite++;
+	for (nextTracking = ite; nextTracking != end; nextTracking++)
+	{
+		if (nextTracking->sid == 0x605)
+			break;
+		if (nextTracking->sid >= 0x630 && nextTracking->sid <= 0x64F)
+		{
+			temp = nextTracking->data[1] & 0x1F;
+			temp = (temp << 8) + nextTracking->data[0];
+			trackObj.range_x = ((double)temp - 7500) * 0.016;
+
+			temp = nextTracking->data[3] & 0x01;
+			temp = (temp << 8) + nextTracking->data[2];
+			temp = (temp << 3) + ((nextTracking->data[1] & 0xE0) >> 5);
+			trackObj.range_y = ((double)temp - 2048) * 0.032;
+
+			temp = nextTracking->data[4] & 0x0F;
+			temp = (temp << 7) + ((nextTracking->data[3] & 0xFE) >> 1);
+			trackObj.speed_x = ((double)temp - 1024) * 0.1;
+
+			temp = nextTracking->data[5] & 0x7F;
+			temp = (temp << 4) + ((nextTracking->data[4] & 0xF0) >> 4);
+			trackObj.speed_y = ((double)temp - 1024) * 0.1;
+			
+			trackObj.number = (nextTracking->data[7] & 0xFC) >> 2;
+
+			printf("%d, %.3f, %.3f, %.3f, %.3f\n", trackObj.number, trackObj.range_x, trackObj.range_y, trackObj.speed_x, trackObj.speed_y);
+		}
+	}
+}
+
+void CDrParse::ParseSlaveTrackingHead(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator end)
+{
+	unsigned int number;
+	unsigned int cycleCount;
+	unsigned int temp;
+	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator nextTracking;
+	TRACKING_DATA_OBJECT trackObj;
+
+	number = ite->data[0];
+	cycleCount = ite->data[7];
+	cycleCount = (cycleCount << 8) + ite->data[6];
+	cycleCount = (cycleCount << 8) + ite->data[5];
+	cycleCount = (cycleCount << 8) + ite->data[4];
+	printf("Slave No. of Tracking %d, Cycle: %d\nNo., Range X, Range Y, Speed X, Speed Y\n", number, cycleCount);
+
+	ite++;
+	for (nextTracking = ite; nextTracking != end; nextTracking++)
+	{
+		if (nextTracking->sid == 0x6A5)
+			break;
+		if (nextTracking->sid >= 0x6D0 && nextTracking->sid <= 0x6EF)
+		{
+			temp = nextTracking->data[1] & 0x1F;
+			temp = (temp << 8) + nextTracking->data[0];
+			trackObj.range_x = ((double)temp - 7500) * 0.016;
+
+			temp = nextTracking->data[3] & 0x01;
+			temp = (temp << 8) + nextTracking->data[2];
+			temp = (temp << 3) + ((nextTracking->data[1] & 0xE0) >> 5);
+			trackObj.range_y = (double)(temp - 2048) * 0.032;
+
+			temp = nextTracking->data[4] & 0x0F;
+			temp = (temp << 7) + ((nextTracking->data[3] & 0xFE) >> 1);
+			trackObj.speed_x = ((double)temp - 1024) * 0.1;
+
+			temp = nextTracking->data[5] & 0x7F;
+			temp = (temp << 4) + ((nextTracking->data[4] & 0xF0) >> 4);
+			trackObj.speed_y = ((double)temp - 1024) * 0.1;
+			
+			trackObj.number = (nextTracking->data[7] & 0xFC) >> 2;
+
+			printf("%d, %.3f, %.3f, %.3f, %.3f\n", trackObj.number, trackObj.range_x, trackObj.range_y, trackObj.speed_x, trackObj.speed_y);
+		}
+	}
+}
+
 void CDrParse::Parse400(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite)
 {
 	if (ite->dlc != 6)
@@ -211,6 +304,12 @@ void CDrParse::ShowRawObject()
 		case 0x3F5:
 			ParseCarVelocity(ite);
 			break;
+		case 0x605:
+			ParseMasterTrackingHead(ite, m_RawList.end());
+			break;
+		case 0x6A5:
+			ParseSlaveTrackingHead(ite, m_RawList.end());
+			break;
 		case 0x403:
 			Parse400(ite);
 			iteRaw = m_RawObject401List.begin();
@@ -267,7 +366,26 @@ void CDrParse::ParseCan()
 		memcpy((void*)&pkt, ptr, sizeof(pkt));
 		ptr += BUFFER_SIZE;
 		m_RawList.push_back(pkt);
-
+#if 0
+		if (pkt.sid == 0x605 || (pkt.sid >= 0x630 && pkt.sid <= 0x64F))
+		{
+			printf("%x,", pkt.sid);
+			for (idx = 0; idx < 8; idx++)
+			{
+				printf("%02X,", pkt.data[idx]);
+			}
+			printf("\n");
+		} 
+		else if (pkt.sid == 0x6A5 || (pkt.sid >= 0x6D0 && pkt.sid <= 0x6EF))
+		{
+			printf("%x,", pkt.sid);
+			for (idx = 0; idx < 8; idx++)
+			{
+				printf("%02X,", pkt.data[idx]);
+			}
+			printf("\n");
+		}
+#endif
 #if 0
 		//byte[7:4]
 		idx = 7;

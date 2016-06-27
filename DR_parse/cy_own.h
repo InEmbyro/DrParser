@@ -25,6 +25,14 @@ namespace CY_OWN {
 		double	relatedSpeed;	// m/s
 		unsigned char type;
 	};
+
+	struct TRACKING_DATA_OBJECT {
+		double range_x;
+		double range_y;
+		double speed_x;
+		double speed_y;
+		unsigned char number;
+	};
 };
 
 #endif	//__CY_OWN_HEADER__

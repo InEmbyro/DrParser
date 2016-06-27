@@ -38,5 +38,7 @@ private:
 	void	Parse400(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
 	void	Parse401(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
 	void	Parse411(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
+	void	ParseMasterTrackingHead(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
+	void	ParseSlaveTrackingHead(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
 	CY_OWN::SYSTEM_STATUS	m_system;
 };
