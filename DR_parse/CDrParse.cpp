@@ -117,7 +117,6 @@ void CDrParse::ParseMasterTrackingHead(std::list<CY_OWN::DR_FILE_CAN_PKT>::itera
 	cycleCount = (cycleCount << 8) + ite->data[6];
 	cycleCount = (cycleCount << 8) + ite->data[5];
 	cycleCount = (cycleCount << 8) + ite->data[4];
-	printf("No. of Tracking %d, Cycle: %d\nNo., Range X, Range Y, Speed X, Speed Y\n", number, cycleCount);
 
 	ite++;
 	for (nextTracking = ite; nextTracking != end; nextTracking++)
@@ -145,7 +144,7 @@ void CDrParse::ParseMasterTrackingHead(std::list<CY_OWN::DR_FILE_CAN_PKT>::itera
 			
 			trackObj.number = (nextTracking->data[7] & 0xFC) >> 2;
 
-			printf("%d, %.3f, %.3f, %.3f, %.3f\n", trackObj.number, trackObj.range_x, trackObj.range_y, trackObj.speed_x, trackObj.speed_y);
+			printf("%d, %.3f, %.3f, %.3f, %.3f, 0\n", trackObj.number, trackObj.range_x, trackObj.range_y, trackObj.speed_x, trackObj.speed_y);
 		}
 	}
 }
@@ -163,7 +162,7 @@ void CDrParse::ParseSlaveTrackingHead(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterat
 	cycleCount = (cycleCount << 8) + ite->data[6];
 	cycleCount = (cycleCount << 8) + ite->data[5];
 	cycleCount = (cycleCount << 8) + ite->data[4];
-	printf("Slave No. of Tracking %d, Cycle: %d\nNo., Range X, Range Y, Speed X, Speed Y\n", number, cycleCount);
+	//printf("Slave No. of Tracking %d, Cycle: %d\nNo., Range X, Range Y, Speed X, Speed Y\n", number, cycleCount);
 
 	ite++;
 	for (nextTracking = ite; nextTracking != end; nextTracking++)
@@ -191,7 +190,7 @@ void CDrParse::ParseSlaveTrackingHead(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterat
 			
 			trackObj.number = (nextTracking->data[7] & 0xFC) >> 2;
 
-			printf("%d, %.3f, %.3f, %.3f, %.3f\n", trackObj.number, trackObj.range_x, trackObj.range_y, trackObj.speed_x, trackObj.speed_y);
+			printf("%d, %.3f, %.3f, %.3f, %.3f, 1\n", trackObj.number, trackObj.range_x, trackObj.range_y, trackObj.speed_x, trackObj.speed_y);
 		}
 	}
 }
@@ -296,20 +295,24 @@ void CDrParse::ShowRawObject()
 	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite;
 	std::list<CY_OWN::RAW_DATA_OBJECT>::iterator iteRaw;
 	
-	cout << "Velocity," << "Target No.," << "Angle," << "Range," << "Power," << "RelatedSpeed," << "Threshold," << "Type," << "0/1" << endl;
+	//cout << "Velocity," << "Target No.," << "Angle," << "Range," << "Power," << "RelatedSpeed," << "Threshold," << "Type," << "0/1" << endl;
+	printf("Tracking No., Range X, Range Y, Speed X, Speed Y, 0/1\n");
 	ite = m_RawList.begin();
 	while (!m_RawList.empty()) {
 		ite = m_RawList.begin();
 		switch (ite->sid) {
+#if 0
 		case 0x3F5:
 			ParseCarVelocity(ite);
 			break;
+#endif
 		case 0x605:
 			ParseMasterTrackingHead(ite, m_RawList.end());
 			break;
 		case 0x6A5:
 			ParseSlaveTrackingHead(ite, m_RawList.end());
 			break;
+#if 0
 		case 0x403:
 			Parse400(ite);
 			iteRaw = m_RawObject401List.begin();
@@ -340,6 +343,7 @@ void CDrParse::ShowRawObject()
 		case 0x414:
 			Parse411(ite, m_RawList.end());
 			break;
+#endif
 		default:
 			break;
 		}
