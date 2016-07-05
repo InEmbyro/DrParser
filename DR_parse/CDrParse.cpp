@@ -144,7 +144,7 @@ void CDrParse::ParseMasterTrackingHead(std::list<CY_OWN::DR_FILE_CAN_PKT>::itera
 			
 			trackObj.number = (nextTracking->data[7] & 0xFC) >> 2;
 
-			printf("%d, %.3f, %.3f, %.3f, %.3f, 0\n", trackObj.number, trackObj.range_x, trackObj.range_y, trackObj.speed_x, trackObj.speed_y);
+			printf("%d, %d, %.3f, %.3f, %.3f, %.3f, 0\n", nextTracking->time, trackObj.number, trackObj.range_x, trackObj.range_y, trackObj.speed_x, trackObj.speed_y);
 		}
 	}
 }
@@ -190,7 +190,7 @@ void CDrParse::ParseSlaveTrackingHead(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterat
 			
 			trackObj.number = (nextTracking->data[7] & 0xFC) >> 2;
 
-			printf("%d, %.3f, %.3f, %.3f, %.3f, 1\n", trackObj.number, trackObj.range_x, trackObj.range_y, trackObj.speed_x, trackObj.speed_y);
+			printf("%d, %d, %.3f, %.3f, %.3f, %.3f, 1\n", nextTracking->time, trackObj.number, trackObj.range_x, trackObj.range_y, trackObj.speed_x, trackObj.speed_y);
 		}
 	}
 }
@@ -296,7 +296,7 @@ void CDrParse::ShowRawObject()
 	std::list<CY_OWN::RAW_DATA_OBJECT>::iterator iteRaw;
 	
 	//cout << "Velocity," << "Target No.," << "Angle," << "Range," << "Power," << "RelatedSpeed," << "Threshold," << "Type," << "0/1" << endl;
-	printf("Tracking No., Range X, Range Y, Speed X, Speed Y, 0/1\n");
+	printf("Time, Tracking No., Range X, Range Y, Speed X, Speed Y, 0/1\n");
 	ite = m_RawList.begin();
 	while (!m_RawList.empty()) {
 		ite = m_RawList.begin();
