@@ -178,7 +178,7 @@ void CDrParse::ParseSlaveTrackingHead(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterat
 			temp = nextTracking->data[3] & 0x01;
 			temp = (temp << 8) + nextTracking->data[2];
 			temp = (temp << 3) + ((nextTracking->data[1] & 0xE0) >> 5);
-			trackObj.range_y = (double)(temp - 2048) * 0.064;
+			trackObj.range_y = ((double)temp - 2048) * 0.064;
 
 			temp = nextTracking->data[4] & 0x0F;
 			temp = (temp << 7) + ((nextTracking->data[3] & 0xFE) >> 1);
