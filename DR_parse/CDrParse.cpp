@@ -144,7 +144,7 @@ void CDrParse::ParseMasterTrackingHead(std::list<CY_OWN::DR_FILE_CAN_PKT>::itera
 			
 			trackObj.number = (nextTracking->data[7] & 0xFC) >> 2;
 
-			printf("%d, %d, %.3f, %.3f, %.3f, %.3f, 0\n", nextTracking->time, trackObj.number, trackObj.range_x, trackObj.range_y, trackObj.speed_x, trackObj.speed_y);
+			printf("%u, %d, %.3f, %.3f, %.3f, %.3f, 0\n", nextTracking->time, trackObj.number, trackObj.range_x, trackObj.range_y, trackObj.speed_x, trackObj.speed_y);
 		}
 	}
 }
@@ -190,7 +190,7 @@ void CDrParse::ParseSlaveTrackingHead(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterat
 			
 			trackObj.number = (nextTracking->data[7] & 0xFC) >> 2;
 
-			printf("%d, %d, %.3f, %.3f, %.3f, %.3f, 1\n", nextTracking->time, trackObj.number, trackObj.range_x, trackObj.range_y, trackObj.speed_x, trackObj.speed_y);
+			printf("%u, %d, %.3f, %.3f, %.3f, %.3f, 1\n", nextTracking->time, trackObj.number, trackObj.range_x, trackObj.range_y, trackObj.speed_x, trackObj.speed_y);
 		}
 	}
 }
