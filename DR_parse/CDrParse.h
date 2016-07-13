@@ -23,8 +23,7 @@ public:
 	void	ShowRawObject(void);
 
 	std::list<CY_OWN::DR_FILE_CAN_PKT> m_RawList;
-	std::list<CY_OWN::RAW_DATA_OBJECT> m_RawObject401List;
-	std::list<CY_OWN::RAW_DATA_OBJECT> m_RawObject411List;
+
 
 private:
 	LPVOID	m_lpMapAddress;
@@ -35,10 +34,6 @@ private:
 	DWORD	filesizeHigh;
 	unsigned int m_cycle;
 	void	ParseCarVelocity(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
-	void	Parse400(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
-	void	Parse401(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
-	void	Parse411(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
-	void	ParseMasterTrackingHead(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
-	void	ParseSlaveTrackingHead(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
+	void	ParseTrace(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
 	CY_OWN::SYSTEM_STATUS	m_system;
 };

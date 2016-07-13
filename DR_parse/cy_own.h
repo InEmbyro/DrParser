@@ -2,6 +2,20 @@
 #define	__CY_OWN_HEADER__
 
 namespace CY_OWN {
+	struct BROOK_CAN_TRACE {
+		unsigned char	traceId;
+		double			radius;
+		double			angle;
+		double			coordinate_x;
+		double			coordinate_y;
+		double			relativeSpeed;
+		double			objectSignalLevel;
+		unsigned char	objectAppearanceStatus;
+		unsigned char	errorFlag;
+		unsigned char	triggerFlag;
+		unsigned char	detectionFlag;
+	};
+
 	struct DR_FILE_CAN_PKT {
 		unsigned char reserve[4];
 		unsigned int time;	//byte[7:4]

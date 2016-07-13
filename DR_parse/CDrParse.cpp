@@ -104,182 +104,103 @@ void CDrParse::ParseCarVelocity(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite
 }
 
 
-void CDrParse::ParseMasterTrackingHead(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator end)
+//void CDrParse::ParseMasterTrackingHead(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator end)
+//{
+//	unsigned int number;
+//	unsigned int cycleCount;
+//	unsigned int temp;
+//	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator nextTracking;
+//	TRACKING_DATA_OBJECT trackObj;
+//
+//	number = ite->data[0];
+//	cycleCount = ite->data[7];
+//	cycleCount = (cycleCount << 8) + ite->data[6];
+//	cycleCount = (cycleCount << 8) + ite->data[5];
+//	cycleCount = (cycleCount << 8) + ite->data[4];
+//
+//	ite++;
+//	for (nextTracking = ite; nextTracking != end; nextTracking++)
+//	{
+//		if (nextTracking->sid == 0x605)
+//			break;
+//		if (nextTracking->sid >= 0x630 && nextTracking->sid <= 0x64F)
+//		{
+//			temp = nextTracking->data[1] & 0x1F;
+//			temp = (temp << 8) + nextTracking->data[0];
+//			trackObj.range_x = ((double)temp - 4000) * 0.032;
+//
+//			temp = nextTracking->data[3] & 0x01;
+//			temp = (temp << 8) + nextTracking->data[2];
+//			temp = (temp << 3) + ((nextTracking->data[1] & 0xE0) >> 5);
+//			trackObj.range_y = ((double)temp - 2048) * 0.064;
+//
+//			temp = nextTracking->data[4] & 0x0F;
+//			temp = (temp << 7) + ((nextTracking->data[3] & 0xFE) >> 1);
+//			trackObj.speed_x = ((double)temp - 1024) * 0.1;
+//
+//			temp = nextTracking->data[5] & 0x7F;
+//			temp = (temp << 4) + ((nextTracking->data[4] & 0xF0) >> 4);
+//			trackObj.speed_y = ((double)temp - 1024) * 0.1;
+//			
+//			trackObj.number = (nextTracking->data[7] & 0xFC) >> 2;
+//
+//			printf("%u, %d, %.3f, %.3f, %.3f, %.3f, 0\n", nextTracking->time, trackObj.number, trackObj.range_x, trackObj.range_y, trackObj.speed_x, trackObj.speed_y);
+//		}
+//	}
+//}
+
+void CDrParse::ParseTrace(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator data)
 {
-	unsigned int number;
-	unsigned int cycleCount;
-	unsigned int temp;
-	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator nextTracking;
-	TRACKING_DATA_OBJECT trackObj;
+	unsigned int	temp;
+	struct BROOK_CAN_TRACE trace;
+#if 1
+	data->data[0] = 0x11;
+	data->data[1] = 0x0a;
+	data->data[2] = 0x4e;
+	data->data[3] = 0x8b;
+	data->data[4] = 0xbf;
+	data->data[5] = 0x0f;
+	data->data[6] = 0x0f;
+	data->data[7] = 0;
+#endif
+	trace.traceId = data->data[0] & 0x07;
+	
+	temp = ((data->data[0] & 0xF8) >> 3) + ((data->data[1] & 0x03) << 5);
+	trace.radius = static_cast<double>(temp) *0.25;
 
-	number = ite->data[0];
-	cycleCount = ite->data[7];
-	cycleCount = (cycleCount << 8) + ite->data[6];
-	cycleCount = (cycleCount << 8) + ite->data[5];
-	cycleCount = (cycleCount << 8) + ite->data[4];
+	temp = ((data->data[2] & 0x01) << 6) + ((data->data[1] & 0xFC) >> 2);
+	trace.angle = (static_cast<double>(temp) - 13) * 5;
 
-	ite++;
-	for (nextTracking = ite; nextTracking != end; nextTracking++)
-	{
-		if (nextTracking->sid == 0x605)
-			break;
-		if (nextTracking->sid >= 0x630 && nextTracking->sid <= 0x64F)
-		{
-			temp = nextTracking->data[1] & 0x1F;
-			temp = (temp << 8) + nextTracking->data[0];
-			trackObj.range_x = ((double)temp - 4000) * 0.032;
+	temp = (data->data[2] & 0xFE) >> 1;
+	trace.coordinate_x = static_cast<double>(temp) * 0.25;
 
-			temp = nextTracking->data[3] & 0x01;
-			temp = (temp << 8) + nextTracking->data[2];
-			temp = (temp << 3) + ((nextTracking->data[1] & 0xE0) >> 5);
-			trackObj.range_y = ((double)temp - 2048) * 0.064;
+	temp = (data->data[3] & 0x7F);
+	trace.coordinate_y = (static_cast<double>(temp) - 64.0f ) * 0.25;
 
-			temp = nextTracking->data[4] & 0x0F;
-			temp = (temp << 7) + ((nextTracking->data[3] & 0xFE) >> 1);
-			trackObj.speed_x = ((double)temp - 1024) * 0.1;
+	temp = (data->data[4] & 0x3F) << 1;
+	temp = temp + ((data->data[3] & 0xC0) >> 7);
+	trace.relativeSpeed = (static_cast<double>(temp) - 128)* 0.4;
 
-			temp = nextTracking->data[5] & 0x7F;
-			temp = (temp << 4) + ((nextTracking->data[4] & 0xF0) >> 4);
-			trackObj.speed_y = ((double)temp - 1024) * 0.1;
-			
-			trackObj.number = (nextTracking->data[7] & 0xFC) >> 2;
+	temp = (data->data[5] & 0x7F) << 1;
+	temp = temp + ((data->data[4] & 0xC0) >> 7);
+	trace.objectSignalLevel = static_cast<double>(temp) * 0.96;
 
-			printf("%u, %d, %.3f, %.3f, %.3f, %.3f, 0\n", nextTracking->time, trackObj.number, trackObj.range_x, trackObj.range_y, trackObj.speed_x, trackObj.speed_y);
-		}
-	}
-}
+	temp = data->data[5] & 0x80;
+	trace.objectAppearanceStatus = temp!=0?1:0;
 
-void CDrParse::ParseSlaveTrackingHead(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator end)
-{
-	unsigned int number;
-	unsigned int cycleCount;
-	unsigned int temp;
-	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator nextTracking;
-	TRACKING_DATA_OBJECT trackObj;
+	temp = data->data[6] & 0x01;
+	trace.errorFlag = temp!=0?1:0;
 
-	number = ite->data[0];
-	cycleCount = ite->data[7];
-	cycleCount = (cycleCount << 8) + ite->data[6];
-	cycleCount = (cycleCount << 8) + ite->data[5];
-	cycleCount = (cycleCount << 8) + ite->data[4];
-	//printf("Slave No. of Tracking %d, Cycle: %d\nNo., Range X, Range Y, Speed X, Speed Y\n", number, cycleCount);
+	temp = (data->data[6] & 0x06) >> 1;
+	trace.triggerFlag = temp;
 
-	ite++;
-	for (nextTracking = ite; nextTracking != end; nextTracking++)
-	{
-		if (nextTracking->sid == 0x6A5)
-			break;
-		if (nextTracking->sid >= 0x6D0 && nextTracking->sid <= 0x6EF)
-		{
-			temp = nextTracking->data[1] & 0x1F;
-			temp = (temp << 8) + nextTracking->data[0];
-			trackObj.range_x = ((double)temp - 4000) * 0.032;
+	temp = data->data[6] & 0x08;
+	trace.detectionFlag = temp!=0?1:0;
 
-			temp = nextTracking->data[3] & 0x01;
-			temp = (temp << 8) + nextTracking->data[2];
-			temp = (temp << 3) + ((nextTracking->data[1] & 0xE0) >> 5);
-			trackObj.range_y = ((double)temp - 2048) * 0.064;
+	printf("%u, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %d, %d, %d, %d\n", 
+		data->time, trace.traceId, trace.radius, trace.angle, trace.coordinate_x, trace.coordinate_y, trace.relativeSpeed, trace.objectSignalLevel,
+		trace.objectAppearanceStatus, trace.errorFlag, trace.triggerFlag, trace.detectionFlag);
 
-			temp = nextTracking->data[4] & 0x0F;
-			temp = (temp << 7) + ((nextTracking->data[3] & 0xFE) >> 1);
-			trackObj.speed_x = ((double)temp - 1024) * 0.1;
-
-			temp = nextTracking->data[5] & 0x7F;
-			temp = (temp << 4) + ((nextTracking->data[4] & 0xF0) >> 4);
-			trackObj.speed_y = ((double)temp - 1024) * 0.1;
-			
-			trackObj.number = (nextTracking->data[7] & 0xFC) >> 2;
-
-			printf("%u, %d, %.3f, %.3f, %.3f, %.3f, 1\n", nextTracking->time, trackObj.number, trackObj.range_x, trackObj.range_y, trackObj.speed_x, trackObj.speed_y);
-		}
-	}
-}
-
-void CDrParse::Parse400(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite)
-{
-	if (ite->dlc != 6)
-		return;
-}
-void CDrParse::Parse401(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator end)
-{
-	int idx;
-	CY_OWN::RAW_DATA_OBJECT raw;
-	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite402;
-
-	raw.targetNo = ite->data[0] & 0x3F;
-
-	idx = ite->data[2] & 0x01;
-	idx = (idx << 8) + ite->data[1];
-	idx = (idx << 2) + ((ite->data[0] & 0xC0) >> 6);
-	raw.angle =((idx - 1024) * 0.16);
-
-	idx = ite->data[4] & 0x01;
-	idx = (idx << 8) + ite->data[3];
-	idx = (idx << 7) + ((ite->data[2] & 0xFE) >> 1);
-	raw.range = idx * 0.01;
-
-	idx = ite->data[5] & 0x03;
-	idx = (idx << 7) + ((ite->data[4] & 0xFE) >> 1);
-	raw.AbsLevel_db = idx * 0.32;
-
-	raw.type = ((ite->data[5] & 0x7C) >> 2);
-
-	idx = ite->data[7];
-	idx = (idx << 6) + ((ite->data[6] & 0xFC) >> 2);
-	raw.relatedSpeed = ((idx - 8192) * 0.02);
-
-	for (ite402 = ite; ite402 != end; ite402++) {
-		if (raw.targetNo == (ite402->data[0] & 0x3F) && ite402->sid == 0x405) {
-			idx = ite402->data[3] & 0x03;
-			idx = (idx << 7) + ((ite402->data[2] & 0xFE) >> 1);
-			raw.threshold = idx * 0.32;
-			m_RawObject401List.push_back(raw);
-			//printf("%.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 0\n", m_system.velocity, (int)raw.targetNo, raw.angle, 
-			//	raw.range, raw.AbsLevel_db, raw.relatedSpeed, raw.threshold, raw.type);
-			break;
-		}
-	}
-}
-
-void CDrParse::Parse411(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator end)
-{
-	int idx;
-	CY_OWN::RAW_DATA_OBJECT raw;
-	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite402;
-
-	raw.targetNo = ite->data[0] & 0x3F;
-
-	idx = ite->data[2] & 0x01;
-	idx = (idx << 8) + ite->data[1];
-	idx = (idx << 2) + ((ite->data[0] & 0xC0) >> 6);
-	raw.angle =((idx - 1024) * 0.16);
-
-	idx = ite->data[4] & 0x01;
-	idx = (idx << 8) + ite->data[3];
-	idx = (idx << 7) + ((ite->data[2] & 0xFE) >> 1);
-	raw.range = idx * 0.01;
-
-	idx = ite->data[5] & 0x03;
-	idx = (idx << 7) + ((ite->data[4] & 0xFE) >> 1);
-	raw.AbsLevel_db = idx * 0.32;
-
-	raw.type = ((ite->data[5] & 0x7C) >> 2);
-
-	idx = ite->data[7];
-	idx = (idx << 6) + ((ite->data[6] & 0xFC) >> 2);
-	raw.relatedSpeed = ((idx - 8192) * 0.02);
-
-	for (ite402 = ite; ite402 != end; ite402++) {
-		if (raw.targetNo == (ite402->data[0] & 0x3F) && ite402->sid == 0x415) {
-			idx = ite402->data[3] & 0x03;
-			idx = (idx << 7) + ((ite402->data[2] & 0xFE) >> 1);
-			raw.threshold = idx * 0.32;
-			//printf("%.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 1\n", m_system.velocity, (int)raw.targetNo, raw.angle, 
-			//	raw.range, raw.AbsLevel_db, raw.relatedSpeed, raw.threshold, raw.type);
-			m_RawObject411List.push_back(raw);
-			break;
-		}
-	}
 }
 
 void CDrParse::ShowRawObject()
@@ -295,56 +216,18 @@ void CDrParse::ShowRawObject()
 	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite;
 	std::list<CY_OWN::RAW_DATA_OBJECT>::iterator iteRaw;
 	
-	//cout << "Velocity," << "Target No.," << "Angle," << "Range," << "Power," << "RelatedSpeed," << "Threshold," << "Type," << "0/1" << endl;
-	printf("Time, Tracking No., Range X, Range Y, Speed X, Speed Y, 0/1\n");
+	cout << "Timestamp," << "Trace ID," << "Radius," << "Angle," << "Coordinate X," << "Coordinate Y," << "Relative Speed," \
+		<< "Signal Level," << "Appearance Status," << " Error flag," << "Trigger flag," << "Detection Flag," << endl;
 	ite = m_RawList.begin();
 	while (!m_RawList.empty()) {
 		ite = m_RawList.begin();
 		switch (ite->sid) {
-#if 0
-		case 0x3F5:
-			ParseCarVelocity(ite);
-			break;
-#endif
-		case 0x605:
-			ParseMasterTrackingHead(ite, m_RawList.end());
-			break;
-		case 0x6A5:
-			ParseSlaveTrackingHead(ite, m_RawList.end());
-			break;
-#if 0
-		case 0x403:
-			Parse400(ite);
-			iteRaw = m_RawObject401List.begin();
-			while (iteRaw != m_RawObject401List.end()) {
-				iteRaw = m_RawObject401List.begin();
-				printf("%.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 0\n", m_system.velocity, (int)iteRaw->targetNo, iteRaw->angle, 
-					iteRaw->range, iteRaw->AbsLevel_db, iteRaw->relatedSpeed, iteRaw->threshold, iteRaw->type);
-				iteRaw++;
-				m_RawObject401List.pop_front();
-			}
-			m_RawObject401List.clear();
-			break;
-		case 0x413:
-			//counter--;
-			iteRaw = m_RawObject411List.begin();
-			while (iteRaw != m_RawObject411List.end()) {
-				iteRaw = m_RawObject411List.begin();
-				printf("%.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 1\n", m_system.velocity, (int)iteRaw->targetNo, iteRaw->angle, 
-					iteRaw->range, iteRaw->AbsLevel_db, iteRaw->relatedSpeed, iteRaw->threshold, iteRaw->type);
-				iteRaw++;
-				m_RawObject411List.pop_front();
-			}
-			m_RawObject411List.clear();
-			break;
-		case 0x404:
-			Parse401(ite, m_RawList.end());
-			break;
-		case 0x414:
-			Parse411(ite, m_RawList.end());
-			break;
-#endif
+		case 0:
 		default:
+			if (ite->sid >= 0x6B0 && ite->sid <= 0x6CF)
+			{
+				ParseTrace(ite);
+			}
 			break;
 		}
 		ite++;
