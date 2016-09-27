@@ -153,7 +153,7 @@ void CDrParse::ParseTrace(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator data)
 {
 	unsigned int	temp;
 	struct BROOK_CAN_TRACE trace;
-#if 1
+#if 0
 	data->data[0] = 0x11;
 	data->data[1] = 0x0a;
 	data->data[2] = 0x4e;
