@@ -33,6 +33,7 @@ CDrParse::CDrParse()
 {
 	m_pOut = NULL;
 	memset((void*)&m_system, 0x00, sizeof(m_system));
+	m_system.velocity = 0;
 }
 
 CDrParse::~CDrParse()
@@ -76,8 +77,10 @@ void CDrParse::OperFile2Mapping(std::basic_string<WCHAR> name)
 			//nothing to do
 		} else {
 			name.replace(idx+1, 3, csv);
+#if 1
 			if (_wfreopen_s(&m_pOut, name.data(), TEXT("w+"), stdout) != 0)
 				cout << "Redirecting fail" << endl;
+#endif
 		}
 	}
 
@@ -241,6 +244,51 @@ void CDrParse::Parse401(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::l
 	}
 }
 
+void CDrParse::Parse431(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator end)
+{
+}
+void CDrParse::Parse431(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, unsigned int id, 
+	std::list<CY_OWN::RAW_DATA_OBJECT>* p, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator end)
+{
+	int idx;
+	CY_OWN::RAW_DATA_OBJECT raw;
+	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator partner;
+
+	raw.targetNo = ite->data[0] & 0x3F;
+
+	idx = ite->data[2] & 0x01;
+	idx = (idx << 8) + ite->data[1];
+	idx = (idx << 2) + ((ite->data[0] & 0xC0) >> 6);
+	raw.angle =((idx - 1024) * 0.16);
+
+	idx = ite->data[4] & 0x01;
+	idx = (idx << 8) + ite->data[3];
+	idx = (idx << 7) + ((ite->data[2] & 0xFE) >> 1);
+	raw.range = idx * 0.01;
+
+	idx = ite->data[5] & 0x03;
+	idx = (idx << 7) + ((ite->data[4] & 0xFE) >> 1);
+	raw.AbsLevel_db = idx * 0.32;
+
+	raw.type = ((ite->data[5] & 0x7C) >> 2);
+
+	idx = ite->data[7];
+	idx = (idx << 6) + ((ite->data[6] & 0xFC) >> 2);
+	raw.relatedSpeed = ((idx - 8192) * 0.02);
+
+	for (partner = ite; partner != end; partner++) {
+		if (raw.targetNo == (partner->data[0] & 0x3F) && partner->sid == id) {
+			idx = partner->data[3] & 0x03;
+			idx = (idx << 7) + ((partner->data[2] & 0xFE) >> 1);
+			raw.threshold = idx * 0.32;
+			p->push_back(raw);
+			//printf("%.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 0\n", m_system.velocity, (int)raw.targetNo, raw.angle, 
+			//	raw.range, raw.AbsLevel_db, raw.relatedSpeed, raw.threshold, raw.type);
+			break;
+		}
+	}
+}
+
 void CDrParse::Parse411(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator end)
 {
 	int idx;
@@ -296,23 +344,32 @@ void CDrParse::ShowRawObject()
 	std::list<CY_OWN::RAW_DATA_OBJECT>::iterator iteRaw;
 	
 	//cout << "Velocity," << "Target No.," << "Angle," << "Range," << "Power," << "RelatedSpeed," << "Threshold," << "Type," << "0/1" << endl;
-	printf("Time, Tracking No., Range X, Range Y, Speed X, Speed Y, 0/1\n");
+	//printf("Time, Tracking No., Range X, Range Y, Speed X, Speed Y, 0/1\n");
+	cout << "velocity" \
+		<< ",target no." \
+		<< ",Angle" \
+		<< ",Range" \
+		<< ",Power" \
+		<< ",Related speed" \
+		<< ",Threshold" \
+		<< ",Type" \
+		<< ",Seneor No." \
+		<< endl;
 	ite = m_RawList.begin();
 	while (!m_RawList.empty()) {
 		ite = m_RawList.begin();
 		switch (ite->sid) {
-#if 0
 		case 0x3F5:
 			ParseCarVelocity(ite);
 			break;
-#endif
+#if 0
 		case 0x605:
 			ParseMasterTrackingHead(ite, m_RawList.end());
 			break;
 		case 0x6A5:
 			ParseSlaveTrackingHead(ite, m_RawList.end());
 			break;
-#if 0
+#endif
 		case 0x403:
 			Parse400(ite);
 			iteRaw = m_RawObject401List.begin();
@@ -324,6 +381,9 @@ void CDrParse::ShowRawObject()
 				m_RawObject401List.pop_front();
 			}
 			m_RawObject401List.clear();
+			break;
+		case 0x404:
+			Parse401(ite, m_RawList.end());
 			break;
 		case 0x413:
 			//counter--;
@@ -337,13 +397,65 @@ void CDrParse::ShowRawObject()
 			}
 			m_RawObject411List.clear();
 			break;
-		case 0x404:
-			Parse401(ite, m_RawList.end());
-			break;
 		case 0x414:
 			Parse411(ite, m_RawList.end());
 			break;
-#endif
+		case 0x430:
+			iteRaw = m_RawObject431List.begin();
+			while (iteRaw != m_RawObject431List.end()) {
+				iteRaw = m_RawObject431List.begin();
+				printf("%.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 2\n", m_system.velocity, (int)iteRaw->targetNo, iteRaw->angle, 
+					iteRaw->range, iteRaw->AbsLevel_db, iteRaw->relatedSpeed, iteRaw->threshold, iteRaw->type);
+				iteRaw++;
+				m_RawObject431List.pop_front();
+			}
+			m_RawObject431List.clear();
+			break;
+		case 0x431:
+			Parse431(ite, 0x432, &m_RawObject431List, m_RawList.end());
+			break;
+		case 0x433:
+			iteRaw = m_RawObject434List.begin();
+			while (iteRaw != m_RawObject434List.end()) {
+				iteRaw = m_RawObject434List.begin();
+				printf("%.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 3\n", m_system.velocity, (int)iteRaw->targetNo, iteRaw->angle, 
+					iteRaw->range, iteRaw->AbsLevel_db, iteRaw->relatedSpeed, iteRaw->threshold, iteRaw->type);
+				iteRaw++;
+				m_RawObject434List.pop_front();
+			}
+			m_RawObject434List.clear();
+			break;
+		case 0x434:
+			Parse431(ite, 0x435, &m_RawObject434List, m_RawList.end());
+			break;
+		case 0x440:
+			iteRaw = m_RawObject441List.begin();
+			while (iteRaw != m_RawObject441List.end()) {
+				iteRaw = m_RawObject441List.begin();
+				printf("%.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 4\n", m_system.velocity, (int)iteRaw->targetNo, iteRaw->angle, 
+					iteRaw->range, iteRaw->AbsLevel_db, iteRaw->relatedSpeed, iteRaw->threshold, iteRaw->type);
+				iteRaw++;
+				m_RawObject441List.pop_front();
+			}
+			m_RawObject441List.clear();
+			break;
+		case 0x441:
+			Parse431(ite, 0x442, &m_RawObject441List, m_RawList.end());
+			break;
+		case 0x443:
+			iteRaw = m_RawObject444List.begin();
+			while (iteRaw != m_RawObject444List.end()) {
+				iteRaw = m_RawObject444List.begin();
+				printf("%.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 5\n", m_system.velocity, (int)iteRaw->targetNo, iteRaw->angle, 
+					iteRaw->range, iteRaw->AbsLevel_db, iteRaw->relatedSpeed, iteRaw->threshold, iteRaw->type);
+				iteRaw++;
+				m_RawObject444List.pop_front();
+			}
+			m_RawObject444List.clear();
+			break;
+		case 0x444:
+			Parse431(ite, 0x445, &m_RawObject444List, m_RawList.end());
+			break;
 		default:
 			break;
 		}
