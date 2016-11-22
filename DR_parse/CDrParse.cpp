@@ -168,21 +168,21 @@ void CDrParse::ParseTrace(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator data)
 	temp = ((data->data[0] & 0xF8) >> 3) + ((data->data[1] & 0x03) << 5);
 	trace.radius = static_cast<double>(temp) *0.25;
 
-	temp = ((data->data[2] & 0x01) << 6) + ((data->data[1] & 0xFC) >> 2);
-	trace.angle = (static_cast<double>(temp) - 13) * 5;
+	temp = ((data->data[1] & 0xFC) >> 2);
+	trace.angle = (static_cast<double>(temp) - 12) * 5;
 
-	temp = (data->data[2] & 0xFE) >> 1;
+	temp = data->data[2];
 	trace.coordinate_x = static_cast<double>(temp) * 0.25;
 
 	temp = (data->data[3] & 0x7F);
 	trace.coordinate_y = (static_cast<double>(temp) - 64.0f ) * 0.25;
 
-	temp = (data->data[4] & 0x3F) << 1;
-	temp = temp + ((data->data[3] & 0xC0) >> 7);
+	temp = (data->data[4] & 0x7F) << 1;
+	temp = temp + ((data->data[3] & 0x80) >> 7);
 	trace.relativeSpeed = (static_cast<double>(temp) - 128)* 0.4;
 
 	temp = (data->data[5] & 0x7F) << 1;
-	temp = temp + ((data->data[4] & 0xC0) >> 7);
+	temp = temp + ((data->data[4] & 0x80) >> 7);
 	trace.objectSignalLevel = static_cast<double>(temp) * 0.96;
 
 	temp = data->data[5] & 0x80;
@@ -197,9 +197,10 @@ void CDrParse::ParseTrace(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator data)
 	temp = data->data[6] & 0x08;
 	trace.detectionFlag = temp!=0?1:0;
 
-	printf("%u, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %d, %d, %d, %d\n", 
-		data->time, trace.traceId, trace.radius, trace.angle, trace.coordinate_x, trace.coordinate_y, trace.relativeSpeed, trace.objectSignalLevel,
-		trace.objectAppearanceStatus, trace.errorFlag, trace.triggerFlag, trace.detectionFlag);
+	printf("%u, %x, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %d, %d, %d, %d\n", 
+		data->time, data->sid, trace.traceId, trace.radius, trace.angle, trace.coordinate_x, trace.coordinate_y,
+		trace.relativeSpeed, trace.objectSignalLevel,trace.objectAppearanceStatus, trace.errorFlag, trace.triggerFlag,
+		trace.detectionFlag);
 
 }
 
@@ -216,7 +217,7 @@ void CDrParse::ShowRawObject()
 	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite;
 	std::list<CY_OWN::RAW_DATA_OBJECT>::iterator iteRaw;
 	
-	cout << "Timestamp," << "Trace ID," << "Radius," << "Angle," << "Coordinate X," << "Coordinate Y," << "Relative Speed," \
+	cout << "Timestamp," << "CAN ID," << "Trace ID," << "Radius," << "Angle," << "Coordinate X," << "Coordinate Y," << "Relative Speed," \
 		<< "Signal Level," << "Appearance Status," << " Error flag," << "Trigger flag," << "Detection Flag," << endl;
 	ite = m_RawList.begin();
 	while (!m_RawList.empty()) {
@@ -224,7 +225,7 @@ void CDrParse::ShowRawObject()
 		switch (ite->sid) {
 		case 0:
 		default:
-			if (ite->sid >= 0x6B0 && ite->sid <= 0x6CF)
+			if (ite->sid >= 0x510 && ite->sid <= 0x597)
 			{
 				ParseTrace(ite);
 			}
