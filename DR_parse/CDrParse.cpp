@@ -171,7 +171,7 @@ void CDrParse::ParseTrace(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator data)
 	temp = ((data->data[1] & 0xFC) >> 2);
 	trace.angle = (static_cast<double>(temp) - 12) * 5;
 
-	temp = data->data[2];
+	temp = data->data[2] - 128;
 	trace.coordinate_x = static_cast<double>(temp) * 0.25;
 
 	temp = (data->data[3] & 0x7F);
