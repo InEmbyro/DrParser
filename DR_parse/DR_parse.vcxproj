@@ -77,6 +77,8 @@
   <ItemGroup>
     <ClInclude Include="CDrParse.h" />
     <ClInclude Include="cy_own.h" />
+    <ClInclude Include="MsgHandler.h" />
+    <ClInclude Include="MsgTracking.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="type.h" />
@@ -84,6 +86,8 @@
   <ItemGroup>
     <ClCompile Include="CDrParse.cpp" />
     <ClCompile Include="DR_parse.cpp" />
+    <ClCompile Include="MsgHandler.cpp" />
+    <ClCompile Include="MsgTracking.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

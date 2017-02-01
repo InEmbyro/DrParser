@@ -33,6 +33,12 @@ CDrParse::CDrParse()
 {
 	m_pOut = NULL;
 	memset((void*)&m_system, 0x00, sizeof(m_system));
+
+	MsgHandler* p;
+	p = NULL;
+	p = new msgTracking(p, 0x6B0, 0x6CF);
+	p = new msgTracking(p, 0x610, 0x62F);
+	_pHandler = new MsgHandler(p);
 }
 
 CDrParse::~CDrParse()
@@ -42,6 +48,8 @@ CDrParse::~CDrParse()
 	if (m_MappingHnd != INVALID_HANDLE_VALUE)
 		CloseHandle(m_MappingHnd);
 	FlushViewOfFile(m_lpMapAddress, 0);
+
+	delete _pHandler;
 }
 
 HANDLE CDrParse::getFileHnd(void)
@@ -217,20 +225,21 @@ void CDrParse::ShowRawObject()
 	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite;
 	std::list<CY_OWN::RAW_DATA_OBJECT>::iterator iteRaw;
 	
-	cout << "Timestamp," << "CAN ID," << "Trace ID," << "Radius," << "Angle," << "Coordinate X," << "Coordinate Y," << "Relative Speed," \
-		<< "Signal Level," << "Appearance Status," << " Error flag," << "Trigger flag," << "Detection Flag," << endl;
+	cout << "Object_Number," << "Sensor_ID," << "X_point1[m]," << "y_point1[m]," << "speed_X[m/s]," \
+		<< "speed_y[m/s]," << endl;
 	ite = m_RawList.begin();
 	while (!m_RawList.empty()) {
 		ite = m_RawList.begin();
-		switch (ite->sid) {
-		case 0:
-		default:
-			if (ite->sid >= 0x510 && ite->sid <= 0x597)
-			{
-				ParseTrace(ite);
-			}
-			break;
-		}
+		_pHandler->MsgHanderProcess(ite);
+		//switch (ite->sid) {
+		//case 0:
+		//default:
+		//	if (ite->sid >= 0x510 && ite->sid <= 0x597)
+		//	{
+		//		ParseTrace(ite);
+		//	}
+		//	break;
+		//}
 		ite++;
 		m_RawList.pop_front();
 	}

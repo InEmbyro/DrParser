@@ -4,6 +4,9 @@
 #include <list>
 #include "type.h"
 #include "cy_own.h"
+#include "MsgHandler.h"
+#include "MsgTracking.h"
+
 #define	BUFFER_SIZE	40
 
 using namespace CY_OWN;
@@ -23,6 +26,7 @@ public:
 	void	ShowRawObject(void);
 
 	std::list<CY_OWN::DR_FILE_CAN_PKT> m_RawList;
+	MsgHandler* _pHandler;
 
 
 private:
