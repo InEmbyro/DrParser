@@ -2,9 +2,10 @@
 #include "MsgHandler.h"
 #include "MsgTracking.h"
 
-msgTracking::msgTracking(MsgHandler* p, unsigned int low, unsigned int high)
+msgTracking::msgTracking(MsgHandler* p, unsigned int low, unsigned int high, unsigned int sensorId)
 	:_low(low), _high(high), MsgHandler(p)
 {
+	_sensorId = sensorId;
 }
 
 bool msgTracking::HasHandler(unsigned int id)
@@ -43,7 +44,7 @@ void msgTracking::MsgHanderProcess(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator 
 			
 		trace.number = (ite->data[7] & 0xFC) >> 2;
 
-		printf("%d, %d, %.3f, %.3f, %.3f, %.3f\n", ite->time / 1000, trace.number, trace.range_x, trace.range_y, trace.speed_x, trace.speed_y);
+		printf("%d, T%d, %d, %.3f, %.3f, %.3f, %.3f\n", ite->time / 1000, _sensorId, trace.number, trace.range_x, trace.range_y, trace.speed_x, trace.speed_y);
 	}
 	else
 	{

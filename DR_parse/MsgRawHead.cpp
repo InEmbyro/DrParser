@@ -18,7 +18,7 @@ void msgRawHead::MsgHanderProcess(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator o
 		if (obj->dlc == 6 && (obj->data[3] & 0xFC) != 0)
 		{
 			//printf("%d, Object_Number, Azimuth1[rad],AZWinke1[¢X], Range1[m]\n", obj->time);
-			printf("Timestamp [ms], Object_Number, Azimuth1[rad],AZWinke1[¢X], Range1[m], AbsLevel_db [dB]\n");
+			printf("Timestamp [ms], Sensor Id, Object_Number, Azimuth1[rad],AZWinke1[¢X], Range1[m], AbsLevel_db [dB]\n");
 		}
 	}
 	else

@@ -37,15 +37,15 @@ CDrParse::CDrParse()
 	MsgHandler* p;
 	p = NULL;
 	p = new msgRawHead(p, 0x400);
-	p = new MsgRaw(p, 0x401, 0x402);
+	p = new MsgRaw(p, 0x401, 0x402, 0);
 
 	p = new msgRawHead(p, 0x410);
-	p = new MsgRaw(p, 0x411, 0x412);
+	p = new MsgRaw(p, 0x411, 0x412, 1);
 
-	p = new msgTracking(p, 0x6B0, 0x6CF);
+	p = new msgTracking(p, 0x6B0, 0x6CF, 1);
 	p = new msgTrackingHead(p, 0x6A1);
 
-	p = new msgTracking(p, 0x610, 0x62F);
+	p = new msgTracking(p, 0x610, 0x62F, 0);
 	p = new msgTrackingHead(p, 0x601);
 	_pHandler = new MsgHandler(p);
 }

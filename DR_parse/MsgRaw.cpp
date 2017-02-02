@@ -1,11 +1,12 @@
 #include "stdafx.h"
 #include "MsgRaw.h"
 
-MsgRaw::MsgRaw(MsgHandler* p, unsigned int first, unsigned int second)
+MsgRaw::MsgRaw(MsgHandler* p, unsigned int first, unsigned int second, unsigned int sensorId)
 	:MsgHandler(p)
 {
 	_first = first;
 	_second = second;
+	_sensorId = sensorId;
 }
 
 void MsgRaw::MsgHanderProcess(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator obj)
@@ -38,7 +39,7 @@ void MsgRaw::MsgHanderProcess(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator obj)
 			temp = obj->data[7];
 			temp = (temp << 6) + ((obj->data[6] & 0xFC) >> 2);
 			_rawObj.relatedSpeed = (temp - 8192) * 0.02;
-			printf("%d, %d, %.3f, %.3f, %.3f, %.3f\n", obj->time / 1000, _rawObj.targetNo, (_rawObj.angle * 3.141593 / 180), _rawObj.angle, _rawObj.range , _rawObj.AbsLevel_db);
+			printf("%d, R%d, %d, %.3f, %.3f, %.3f, %.3f\n", obj->time / 1000, _sensorId, _rawObj.targetNo, (_rawObj.angle * 3.141593 / 180), _rawObj.angle, _rawObj.range , _rawObj.AbsLevel_db);
 		}
 		else
 		{
