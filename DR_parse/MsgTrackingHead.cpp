@@ -17,7 +17,7 @@ void msgTrackingHead::MsgHanderProcess(std::list<CY_OWN::DR_FILE_CAN_PKT>::itera
 	{
 		if (obj->data[0] != 0)
 		{
-			cout << "Timestamp [ms], Sensor Id, Object_Number," << "Sensor_ID," << "X_point1[m]," << "y_point1[m]," << "speed_X[m/s]," \
+			cout << "Timestamp [ms], Sensor Id, Object_Number," << "X_point1[m]," << "y_point1[m]," << "speed_X[m/s]," \
 				<< "speed_y[m/s]," << endl;
 		}
 	}
