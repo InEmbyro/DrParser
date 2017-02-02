@@ -36,8 +36,17 @@ CDrParse::CDrParse()
 
 	MsgHandler* p;
 	p = NULL;
+	p = new msgRawHead(p, 0x400);
+	p = new MsgRaw(p, 0x401, 0x402);
+
+	p = new msgRawHead(p, 0x410);
+	p = new MsgRaw(p, 0x411, 0x412);
+
 	p = new msgTracking(p, 0x6B0, 0x6CF);
+	p = new msgTrackingHead(p, 0x6A1);
+
 	p = new msgTracking(p, 0x610, 0x62F);
+	p = new msgTrackingHead(p, 0x601);
 	_pHandler = new MsgHandler(p);
 }
 
@@ -225,11 +234,18 @@ void CDrParse::ShowRawObject()
 	std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite;
 	std::list<CY_OWN::RAW_DATA_OBJECT>::iterator iteRaw;
 	
-	cout << "Object_Number," << "Sensor_ID," << "X_point1[m]," << "y_point1[m]," << "speed_X[m/s]," \
-		<< "speed_y[m/s]," << endl;
 	ite = m_RawList.begin();
 	while (!m_RawList.empty()) {
 		ite = m_RawList.begin();
+		//if (ite->sid == 0x601)
+		//{
+		//	cout << "Object_Number," << "Sensor_ID," << "X_point1[m]," << "y_point1[m]," << "speed_X[m/s]," \
+		//		<< "speed_y[m/s]," << endl;
+		//}
+		//else if (ite->sid == 0x400)
+		//{
+		//	cout << "Object_Number, Azimuth1[rad],AZWinke1[¢X], Range1[m]" << endl;
+		//}
 		_pHandler->MsgHanderProcess(ite);
 		//switch (ite->sid) {
 		//case 0:

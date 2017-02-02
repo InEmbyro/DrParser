@@ -18,7 +18,7 @@ bool msgTracking::HasHandler(unsigned int id)
 
 void msgTracking::MsgHanderProcess(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite)
 {
-	unsigned int temp;
+	int temp;
 
 	if (HasHandler((ite->sid)))
 	{
@@ -43,7 +43,7 @@ void msgTracking::MsgHanderProcess(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator 
 			
 		trace.number = (ite->data[7] & 0xFC) >> 2;
 
-		printf("%d, 0, %.3f, %.3f, %.3f, %.3f\n", trace.number, trace.range_x, trace.range_y, trace.speed_x, trace.speed_y);
+		printf("%d, %d, %.3f, %.3f, %.3f, %.3f\n", ite->time / 1000, trace.number, trace.range_x, trace.range_y, trace.speed_x, trace.speed_y);
 	}
 	else
 	{
