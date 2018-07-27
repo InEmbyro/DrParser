@@ -17,6 +17,7 @@ namespace CY_OWN {
 		double velocity;
 	};
 	struct RAW_DATA_OBJECT {
+		unsigned int time;
 		unsigned char targetNo;
 		double	threshold;
 		double	angle;
