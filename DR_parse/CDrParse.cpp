@@ -92,10 +92,42 @@ HANDLE CDrParse::getMappingHnd(void)
 	return m_MappingHnd;
 }
 
+
 LPVOID CDrParse::getMapAddr(void)
 {
 	return m_lpMapAddress;
 }
+
+void CDrParse::ParseCarYawrate(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, unsigned short canId)
+{
+	switch (canId) {
+	case 0x121:
+		{
+			YAW temp1;
+			temp1.byte[1] = ite->data[2];
+			temp1.byte[0] = ite->data[3];
+			m_system.yawrate = temp1.value / 64 * 0.244;
+		}
+		break;
+	case 0x3F7:
+		{
+			int temp;
+			temp = (ite->data[6] & 0x03);
+			temp = (temp << 8) + ite->data[5];
+			temp = (temp << 4) + ((ite->data[4] & 0xF0) >> 4);
+			if (ite->data[4] & 0x08) {
+				temp = -temp;
+			}
+			m_system.yawrate = (double)temp * 0.01;
+		}
+		break;
+	default:
+		break;
+	}
+
+}
+
+
 
 void CDrParse::ParseCarVelocity(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite)
 {
@@ -104,6 +136,15 @@ void CDrParse::ParseCarVelocity(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite
 	idx = ite->data[1] & 0x7F;
 	idx = (idx << 8) + ite->data[0];
 	m_system.velocity = idx * 0.01;
+}
+
+void CDrParse::ParseCarVelocity0x161(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite)
+{
+	int temp;
+
+	temp = ite->data[1] * 256 + ite->data[2];
+	temp = (temp / 256) - 30;
+	m_system.velocity = temp;
 }
 
 
@@ -329,8 +370,15 @@ void CDrParse::ShowRawObject()
 	while (!m_RawList.empty()) {
 		ite = m_RawList.begin();
 		switch (ite->sid) {
+		case 0x3F7:
+		case 0x121:
+			ParseCarYawrate(ite, ite->sid);
+			break;
 		case 0x3F5:
 			ParseCarVelocity(ite); 
+			break;
+		case 0x161:
+			ParseCarVelocity0x161(ite); 
 			break;
 		//case 0x6A5:
 		//	ParseSlaveTrackingHead(ite, m_RawList.end());
@@ -340,7 +388,8 @@ void CDrParse::ShowRawObject()
 			iteRaw = m_RawObject401List.begin();
 			while (iteRaw != m_RawObject401List.end()) {
 				iteRaw = m_RawObject401List.begin();
-				printf("D, %u, %.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 0\n", iteRaw->time, m_system.velocity, (int)iteRaw->targetNo, iteRaw->angle, 
+				printf("D, %u, %.3f, %.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 0\n", iteRaw->time, m_system.velocity, 
+					m_system.yawrate, (int)iteRaw->targetNo, iteRaw->angle, 
 					iteRaw->range, iteRaw->AbsLevel_db, iteRaw->relatedSpeed, iteRaw->threshold, iteRaw->type);
 				iteRaw++;
 				m_RawObject401List.pop_front();
@@ -355,7 +404,8 @@ void CDrParse::ShowRawObject()
 			iteRaw = m_RawObject411List.begin();
 			while (iteRaw != m_RawObject411List.end()) {
 				iteRaw = m_RawObject411List.begin();
-				printf("D, %u, %.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 1\n", iteRaw->time, m_system.velocity, (int)iteRaw->targetNo, iteRaw->angle, 
+				printf("D, %u, %.3f, %.3f, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %d, 1\n", iteRaw->time, m_system.velocity, 
+					m_system.yawrate, (int)iteRaw->targetNo, iteRaw->angle, 
 					iteRaw->range, iteRaw->AbsLevel_db, iteRaw->relatedSpeed, iteRaw->threshold, iteRaw->type);
 				iteRaw++;
 				m_RawObject411List.pop_front();
@@ -424,9 +474,8 @@ void CDrParse::ShowRawObject()
 		default:
 			if (ite->sid >= 0x630 && ite->sid <= 0x64F) {
 				ParseMasterTrackingHead(ite, m_RawList.end());
-			}
-			if (ite->sid >= 0x6D0 && ite->sid <= 0x6EF) {
-				ParseMasterTrackingHead(ite, m_RawList.end());
+			} else if (ite->sid >= 0x6D0 && ite->sid <= 0x6EF) {
+				ParseSlaveTrackingHead(ite, m_RawList.end());
 			}
 			break;
 		}

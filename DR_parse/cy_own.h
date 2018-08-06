@@ -13,8 +13,17 @@ namespace CY_OWN {
 		unsigned char data[8];	//byte[27:20]
 		unsigned char reserve4[12];
 	};
+
+	typedef union {
+		struct {
+			unsigned char byte[2];
+		};
+		short int value;
+	} YAW;
+
 	struct SYSTEM_STATUS {
 		double velocity;
+		double yawrate;
 	};
 	struct RAW_DATA_OBJECT {
 		unsigned int time;

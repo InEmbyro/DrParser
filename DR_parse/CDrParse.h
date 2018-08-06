@@ -39,6 +39,8 @@ private:
 	DWORD	filesizeHigh;
 	unsigned int m_cycle;
 	void	ParseCarVelocity(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
+	void	ParseCarVelocity0x161(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
+	void	ParseCarYawrate(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator, unsigned short canId);
 	void	Parse400(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
 	void	Parse401(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
 	void	Parse411(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
