@@ -21,10 +21,25 @@ namespace CY_OWN {
 		short int value;
 	} YAW;
 
+	struct GUARDRAIL_INFO {
+		unsigned char leftEnable;
+		double leftPos;
+		unsigned char rightEnable;
+		double rightPos;
+	};
+
+	struct ALERT_INFO {
+		unsigned char master;
+		unsigned char slave;
+	};
+
 	struct SYSTEM_STATUS {
 		double velocity;
 		double yawrate;
+		struct GUARDRAIL_INFO guardrail;
+		struct ALERT_INFO alert;
 	};
+
 	struct RAW_DATA_OBJECT {
 		unsigned int time;
 		unsigned char targetNo;

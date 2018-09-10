@@ -341,6 +341,50 @@ void CDrParse::Parse411(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, std::l
 	}
 }
 
+void CDrParse::ParseGuardrailPos(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, unsigned int sensorNo)
+{
+	double idx;
+
+	idx = ite->data[7] * 2 + ((ite->data[6] & 0x80) / 128);
+	idx = (idx - 255) * 0.1;
+
+	if (sensorNo == 0) {
+		m_system.guardrail.leftPos = idx;
+	} else if (sensorNo == 1) {
+		m_system.guardrail.rightPos = idx;
+	}
+}
+
+
+void CDrParse::ParseGuardrailEnable(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, unsigned int sensorNo)
+{
+	int idx;
+
+	idx = ite->data[0] & 0x01;
+
+	if (sensorNo == 0) {	//master
+		m_system.guardrail.leftEnable = idx;
+	} else if (sensorNo == 1) {			//slave
+		m_system.guardrail.rightEnable = idx;
+	}
+}
+
+
+void CDrParse::ParseAlert(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator ite, unsigned int SensorNo)
+{
+	int temp;
+	
+	if (SensorNo == 0) {	//master
+		temp = (ite->data[7]) & 0x80;
+		m_system.alert.master = temp?1:0;
+	} else if (SensorNo == 1) {		//slave
+		temp = (ite->data[6]) & 0x80;
+		m_system.alert.slave = temp?1:0;
+	} else {
+		//nothing to do
+	}
+}
+
 void CDrParse::ShowRawObject()
 {
 	if (m_RawList.size() <= 0)
@@ -370,6 +414,28 @@ void CDrParse::ShowRawObject()
 	while (!m_RawList.empty()) {
 		ite = m_RawList.begin();
 		switch (ite->sid) {
+		case 0x6F8:
+			ParseAlert(ite, 0);
+			printf("Alert, %u, %d, 0\n", ite->time, m_system.alert.master);
+			break;
+		case 0x6FA:
+			ParseAlert(ite, 1);
+			printf("Alert, %u, %d, 1\n", ite->time, m_system.alert.slave);
+			break;
+		case 0x713:
+			ParseGuardrailEnable(ite, 0);
+			break;
+		case 0x723:
+			ParseGuardrailPos(ite, 0);
+			printf("G, %u, %d, %.3f, 0\n", ite->time, m_system.guardrail.leftEnable, m_system.guardrail.leftPos);
+			break;
+		case 0x714:
+			ParseGuardrailEnable(ite, 1);
+			break;
+		case 0x724:
+			ParseGuardrailPos(ite, 1);
+			printf("G, %u, %d, %.3f, 1\n", ite->time, m_system.guardrail.rightEnable, m_system.guardrail.rightPos);
+			break;
 		case 0x3F7:
 		case 0x121:
 			ParseCarYawrate(ite, ite->sid);

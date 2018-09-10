@@ -49,5 +49,10 @@ private:
 
 	void	ParseMasterTrackingHead(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
 	void	ParseSlaveTrackingHead(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator, std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator);
+
+	void	ParseAlert(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator, unsigned int);
+	void	ParseGuardrailEnable(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator, unsigned int);
+	void	ParseGuardrailPos(std::list<CY_OWN::DR_FILE_CAN_PKT>::iterator, unsigned int);
+
 	CY_OWN::SYSTEM_STATUS	m_system;
 };
